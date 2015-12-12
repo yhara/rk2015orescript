@@ -36,6 +36,18 @@ module OreScript
       "is_even" => [TyFun[NUMBER, BOOL], ->(x){
         bool[x.value.even?]
       }.curry],
+      "printn" => [TyFun[NUMBER, NUMBER], ->(n){
+        if n.value % 1 == 0
+          print n.value.to_i
+        else
+          print n.value
+        end
+        n
+      }.curry],
+      "printc" => [TyFun[NUMBER, NUMBER], ->(n){
+        print n.value.chr
+        n
+      }.curry],
     }
   end
 end
