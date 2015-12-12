@@ -2,6 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     concurrent-ruby (1.0.0)
+    diff-lcs (1.2.5)
     hike (1.2.3)
     opal (0.8.1)
       hike (~> 1.2)
@@ -12,6 +13,19 @@ GEM
       opal (>= 0.8.0, < 0.10)
     racc (1.4.14)
     rack (1.6.4)
+    rspec (3.2.0)
+      rspec-core (~> 3.2.0)
+      rspec-expectations (~> 3.2.0)
+      rspec-mocks (~> 3.2.0)
+    rspec-core (3.2.1)
+      rspec-support (~> 3.2.0)
+    rspec-expectations (3.2.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-mocks (3.2.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-support (3.2.2)
     sourcemap (0.1.1)
     sprockets (3.5.1)
       concurrent-ruby (~> 1.0)
@@ -25,3 +39,4 @@ DEPENDENCIES
   opal
   opal-rspec
   racc
+  rspec
