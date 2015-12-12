@@ -218,7 +218,7 @@ module OreScript
         return TypeCheck.unify(*constraints)
       end
 
-      # Convety2 this subst into a Equation
+      # Convert this subst into a Equation
       def to_constr
         @hash.map{|id, ty|
           Equation.new(Type::TyVar.new(id), ty)
