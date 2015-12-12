@@ -4,7 +4,7 @@ module OreScript
   class TypeCheck
     class InferenceError < StandardError; end
 
-    class Constraint
+    class Equation
       def initialize(ty1, ty2)
         raise TypeError.new("ty1: #{ty1.inspect}") unless ty1.is_a?(Type::Base)
         raise TypeError.new("ty2: #{ty2.inspect}") unless ty2.is_a?(Type::Base)
@@ -12,7 +12,7 @@ module OreScript
       end
       attr_reader :ty1, :ty2
 
-      def swap; Constraint.new(@ty2, @ty1); end
+      def swap; Equation.new(@ty2, @ty1); end
 
       def substitute!(s)
         @ty1 = @ty1.substitute(s)
@@ -218,10 +218,10 @@ module OreScript
         return TypeCheck.unify(*constraints)
       end
 
-      # Convety2 this subst into a Constraint
+      # Convety2 this subst into a Equation
       def to_constr
         @hash.map{|id, ty|
-          Constraint.new(Type::TyVar.new(id), ty)
+          Equation.new(Type::TyVar.new(id), ty)
         }
       end
     end
@@ -256,7 +256,7 @@ module OreScript
         s2, arg_type = infer(env.substitute(s1), arg_expr)
 
         func_type = func_type.substitute(s2)
-        constr = Constraint.new(func_type, TyFun.new(arg_type, result_type))
+        constr = Equation.new(func_type, TyFun.new(arg_type, result_type))
         s3 = TypeCheck.unify(constr)
 
         [s1.merge(s2, s3), result_type.substitute(s3)]
@@ -298,8 +298,8 @@ module OreScript
         ty1, ty2 = con.ty1, con.ty2
         case
         when ty1.is_a?(TyFun) && ty2.is_a?(TyFun)
-          consts.push Constraint.new(ty1.param_ty, ty2.param_ty)
-          consts.push Constraint.new(ty1.ret_ty, ty2.ret_ty)
+          consts.push Equation.new(ty1.param_ty, ty2.param_ty)
+          consts.push Equation.new(ty1.ret_ty, ty2.ret_ty)
         when ty1.is_a?(TyVar)
           next if ty2 == ty1
           
