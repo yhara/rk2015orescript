@@ -42,6 +42,8 @@ def parse(str)
     case
     when s.scan(/\s+/)
       # skip whitespace
+    when s.scan(%r{//.*\n})
+      # skip comment
     when m = s.scan(/[(){},=]/)
       @q << [m, nil]
     when m = s.scan(/\d+(\.\d+)?/)

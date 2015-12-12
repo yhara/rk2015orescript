@@ -32,6 +32,10 @@ module OreScript
         expect(run("false")).to eq(Value::FALSE)
         expect(run("99")).to eq(Value::Number.new(99.0))
       end
+
+      it "comment" do
+        expect(run("//true\nfalse")).to eq(Value::FALSE)
+      end
     end
   end
 end
