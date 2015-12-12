@@ -250,19 +250,19 @@ module_eval(<<'.,.,', 'parser.ry', 23)
 
 module_eval(<<'.,.,', 'parser.ry', 26)
   def _reduce_17(val, _values)
-     [:literal, "number", val[0]] 
+     [:literal, "Number", val[0]] 
   end
 .,.,
 
 module_eval(<<'.,.,', 'parser.ry', 28)
   def _reduce_18(val, _values)
-     [:literal, "bool", true] 
+     [:literal, "Bool", true] 
   end
 .,.,
 
 module_eval(<<'.,.,', 'parser.ry', 30)
   def _reduce_19(val, _values)
-     [:literal, "bool", false] 
+     [:literal, "Bool", false] 
   end
 .,.,
 

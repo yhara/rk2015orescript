@@ -24,11 +24,11 @@ rule
              { [:varref, val[0]] }
     literal : number | bool
     number : NUMBER
-             { [:literal, "number", val[0]] }
+             { [:literal, "Number", val[0]] }
     bool : 'true' 
-           { [:literal, "bool", true] }
+           { [:literal, "Bool", true] }
          | 'false'
-           { [:literal, "bool", false] }
+           { [:literal, "Bool", false] }
 end
 
 ---- header

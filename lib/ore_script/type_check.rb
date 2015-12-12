@@ -1,3 +1,5 @@
+require 'forwardable'
+
 module OreScript
   class TypeCheck
     class InferenceError < StandardError; end
@@ -35,8 +37,8 @@ module OreScript
         def occurs?(id); false; end
         def var_ids; []; end
       end
-      NUMBER = TyRaw.new("number")
-      BOOL = TyRaw.new("bool")
+      NUMBER = TyRaw.new("Number")
+      BOOL = TyRaw.new("Bool")
 
       class TyVar < Base
         @@lastid = 0
@@ -322,3 +324,17 @@ module OreScript
   end
 end
 
+if $0 == __FILE__
+  $LOAD_PATH.unshift "#{__dir__}/.."
+  require 'ore_script'
+  class OreScript::TypeCheck
+    tc = OreScript::TypeCheck.new
+    ast = OreScript::Parser.new.parse("f = fn(x){ add(x)(1) }")
+        env = TypeEnv.new(
+          OreScript::Builtin::FUNCTIONS.map{|name, (ty, _)|
+            [name, TypeScheme.new([], ty)]
+          }.to_h
+        )
+    p tc.infer(env, ast)
+  end
+end
