@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+$LOAD_PATH.unshift "#{__dir__}/../lib"
+require 'ore_script'
+require 'pp'
+
+src = ARGF.read
+puts src
+ast = OreScript::Parser.new.parse(src)
+pp ast
+pp OreScript::TypeCheck.new.check(ast)
+OreScript::Evaluator.new.eval(ast)

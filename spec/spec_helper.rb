@@ -1,0 +1,1 @@
+require 'ore_script'
