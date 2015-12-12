@@ -6,7 +6,7 @@ module OreScript
       TRUE = Object.new
       FALSE = Object.new
       Number = Struct.new(:value)
-      Function = Struct.new(:env, :param_names, :body_exprs)
+      Function = Struct.new(:env, :param_name, :body_exprs)
     end
 
     def eval(ast)
@@ -50,41 +50,22 @@ module OreScript
       env[var_name] = eval_expression(env, expr)
     end
 
-    def eval_function(env, param_names, body_exprs)
-      Value::Function.new(env, param_names, body_exprs)
+    def eval_function(env, param_name, body_exprs)
+      Value::Function.new(env, param_name, body_exprs)
     end
 
-    def eval_fcall(env, func_expr, arg_exprs)
+    def eval_fcall(env, func_expr, arg_expr)
       func = eval_expression(env, func_expr)
-      args = arg_exprs.map{|x| eval_expression(env, x)}
+      arg = eval_expression(env, arg_expr)
 
       case func
       when Value::Function
-        if args.length != func.param_names.length
-          raise "wrong number of args: "+
-                "#{args.length} for #{func.param_names.length}"
-        end
-        newenv = func.env.merge( func.param_names.zip(args).to_h )
+        newenv = func.env.merge(func.param_name => arg)
         eval_expressions(newenv, func.body_exprs)
       when Proc # builtin
-        if args.length != func.arity
-          raise "wrong number of args: #{args.length} for #{func.arity}"
-        end
-        func.call(*args)
+        func.call(arg)
       else
         raise "expected Function but got #{func.inspect}"
-      end
-    end
-
-    def eval_if(env, cond_expr, then_exprs, else_exprs)
-      cond = eval_expression(env, cond_expr)
-      case cond
-      when Value::TRUE
-        eval_expressions(env, then_exprs)
-      when Value::FALSE
-        eval_expressions(env, else_exprs)
-      else
-        raise "expected Bool but got #{cond.inspect}"
       end
     end
 

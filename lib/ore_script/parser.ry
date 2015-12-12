@@ -16,24 +16,12 @@ rule
                | '(' expression ')' { val[1] }
     let : VAR '=' expression
           { [:let, val[0], val[2]] }
-    function : 'fn' '(' params ')' '{' expressions '}' 
+    function : 'fn' '(' VAR ')' '{' expressions '}' 
                { [:function, val[2], val[5]] }
-    params : VAR
-           { [val[0]] }
-         | params ',' VAR
-           { val[0].push(val[2]) }
-    fcall : expression '(' args ')'
+    fcall : expression '(' expression ')'
             { [:fcall, val[0], val[2]] }
-    args : expression
-           { [val[0]] }
-         | args ',' expression
-           { val[0].push(val[2]) }
-    if : 'if' '(' expression ')' '{' expressions '}' 'else' '{' expressions '}'
-         { [:if, val[2], val[5], val[9]] }
-
     varref : VAR
              { [:varref, val[0]] }
-
     literal : number | bool
     number : NUMBER
              { [:literal, "number", val[0]] }

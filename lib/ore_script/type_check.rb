@@ -64,38 +64,37 @@ module OreScript
       end
 
       class TyFun < Base
-        def self.[](param_tys, ret_ty); new(param_tys, ret_ty); end
+        def self.[](param_ty, ret_ty); new(param_ty, ret_ty); end
 
-        def initialize(param_tys, ret_ty)
-          raise "param_tys not array" unless param_tys.is_a?(Array)
-          @param_tys, @ret_ty = param_tys, ret_ty
+        def initialize(param_ty, ret_ty)
+          raise if param_ty.is_a? Array
+          @param_ty, @ret_ty = param_ty, ret_ty
         end
-        attr_reader :param_tys, :ret_ty
+        attr_reader :param_ty, :ret_ty
 
         def ==(other)
           other.is_a?(TyFun) &&
-            other.param_tys == @param_tys &&
+            other.param_ty == @param_ty &&
             other.ret_ty == @ret_ty
         end
 
         def inspect(inner=false)
-          params = @param_tys.map{|x| x.inspect(true)}.join(", ")
           [
             ("Ty(" if !inner),
-            "[#{params}] -> #{@ret_ty.inspect(true)}",
+            "#{@param_ty.inspect(true)} -> #{@ret_ty.inspect(true)}",
             (")" if !inner)
           ].join
         end
 
         def substitute(subst)
-          TyFun.new(@param_tys.map{|x| x.substitute(subst)},
+          TyFun.new(@param_ty.substitute(subst),
                     @ret_ty.substitute(subst))
         end
         def occurs?(id)
-          @param_tys.any?{|x| x.occurs?(id)} || @ret_ty.occurs?(id)
+          @param_ty.occurs?(id) || @ret_ty.occurs?(id)
         end
         def var_ids
-          @param_tys.flat_map(&:var_ids) + @ret_ty.var_ids
+          @param_ty.var_ids + @ret_ty.var_ids
         end
       end
     end
@@ -248,44 +247,24 @@ module OreScript
         raise InferenceError, "Variable #{name} not found" if not env.key?(name)
         [Subst.empty, env[name].instantiate]
       when :fcall
-        _, func_expr, arg_exprs = *node
+        _, func_expr, arg_expr = *node
         result_type = TyVar.new
 
         s1, func_type = infer(env, func_expr)
-
-        init = [s1, env.substitute(s1), []]
-        s2, _, arg_types = arg_exprs.reduce(init) do |(s_, env_, tys), expr|
-          ss, ty = infer(env_, expr)
-          [s_.merge(ss), env_.substitute(ss), tys + [ty]]
-        end
+        s2, arg_type = infer(env.substitute(s1), arg_expr)
 
         func_type = func_type.substitute(s2)
-        s3 = TypeCheck.unify(
-          Constraint.new(func_type,
-                         TyFun.new(arg_types, result_type))
-        )
+        constr = Constraint.new(func_type, TyFun.new(arg_type, result_type))
+        s3 = TypeCheck.unify(constr)
 
         [s1.merge(s2, s3), result_type.substitute(s3)]
       when :function
-        _, names, body_expr = *node
-        arg_types = names.map{ TyVar.new }
-        newenv = env.merge(
-          names.zip(arg_types).map{|name, ty|
-            [name, TypeScheme.new([], ty)]
-          }.to_h
-        )
-        s, t = infer(newenv, body_expr)
-        [s, TyFun.new(arg_types, t).substitute(s)]
-#      when :let_
-#        _, name, var_expr, body_expr = *node
-#
-#        s1, var_type = infer(env, var_expr)
-#        newenv = env.substitute(s1)
-#        var_ts = newenv.generalize(var_type)
-#
-#        s2, body_type = infer(newenv.merge(name => var_ts), body_expr)
-#
-#        [s1.merge(s2), body_type]
+        _, name, body = *node
+
+        arg_type = TyVar.new
+        newenv = env.merge(name => TypeScheme.new([], arg_type))
+        s, t = infer(newenv, body)
+        [s, TyFun.new(arg_type, t).substitute(s)]
       when :let
         _, name, expr = *node
 
@@ -301,20 +280,6 @@ module OreScript
           s_, ty_ = infer(env, expr)
           [s.merge(s_), ty_]
         }
-      when :if
-        _, cond_expr, then_exprs, else_exprs = *node
-
-        s1, ty1 = infer(env, cond_expr)
-        env = env.substitute(s1)
-        s2, ty2 = infer(env, then_exprs)
-        env = env.substitute(s2)
-        s3, ty3 = infer(env, else_exprs)
-
-        s4 = TypeCheck.unify(
-          Constraint.new(ty1, Type::BOOL),
-          Constraint.new(ty2, ty3)
-        )
-        [s1.merge(s2, s3, s4), ty2.substitute(s4)]
       else
         raise ArgumentError, "unkown node: #{node.inspect}"
       end
@@ -331,14 +296,7 @@ module OreScript
         ty1, ty2 = con.ty1, con.ty2
         case
         when ty1.is_a?(TyFun) && ty2.is_a?(TyFun)
-          if ty1.param_tys.length != ty2.param_tys.length
-            raise InferenceError, "arity mismatch: %p vs %p" % [ty1, ty2]
-          end
-          consts.concat(
-            ty1.param_tys.zip(ty2.param_tys).map{|l, r|
-              Constraint.new(l, r)
-            }
-          )
+          consts.push Constraint.new(ty1.param_ty, ty2.param_ty)
           consts.push Constraint.new(ty1.ret_ty, ty2.ret_ty)
         when ty1.is_a?(TyVar)
           next if ty2 == ty1

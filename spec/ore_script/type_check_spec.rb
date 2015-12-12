@@ -10,33 +10,11 @@ module OreScript
         return ty
       end
 
-      describe "if" do
-        it "ok" do
-          expect(chk("if(true){ 1 }else{ 2 }")).to eq(NUMBER)
-          src = <<-EOD
-            f = fn(x){
-              if(is_odd(x)){ mul(x, 2) }else{ div(x, 2) }
-            }
-            f(3)
-          EOD
-          expect(chk(src)).to eq(NUMBER)
-        end
-
-        it "ng" do
-          expect {
-            chk("if(0){ 1 }else{ 2 }")
-          }.to raise_error(TypeCheck::InferenceError)
-          expect {
-            chk("if(true){ 1 }else{ false }")
-          }.to raise_error(TypeCheck::InferenceError)
-        end
-      end
-
       describe "let" do
         it "mono" do
           expect(chk("x = 1 \n x")).to eq(NUMBER)
           src = <<-EOD
-            f = fn(x){ add(x, 1) }
+            f = fn(x){ add(x)(1) }
             y = 2
             f(y)
           EOD
@@ -50,7 +28,7 @@ module OreScript
             f(1)
             f
           EOD
-          expect(chk(src)).to eq(TyFun[[TyVar[6]], TyVar[6]])
+          expect(chk(src)).to eq(TyFun[TyVar[6], TyVar[6]])
         end
       end
 
@@ -59,22 +37,22 @@ module OreScript
       end
 
       it "function" do
-        expect(chk("fn(x){ 1 }")).to eq(TyFun[[TyVar[1]], NUMBER])
-        expect(chk("fn(x){ x }")).to eq(TyFun[[TyVar[1]], TyVar[1]])
+        expect(chk("fn(x){ 1 }")).to eq(TyFun[TyVar[1], NUMBER])
+        expect(chk("fn(x){ x }")).to eq(TyFun[TyVar[1], TyVar[1]])
 
         ty_x = TyVar[2]
-        ty_f = TyFun[[ty_x], TyVar[3]]
-        expect(chk("fn(f, x){ f(x) }")).to eq(
-          TyFun[[ty_f, ty_x], TyVar[3]]
+        ty_f = TyFun[ty_x, TyVar[3]]
+        expect(chk("fn(f){ fn(x){ f(x) }}")).to eq(
+          TyFun[ty_f, TyFun[ty_x, TyVar[3]]]
         )
       end
 
       it "fcall" do
-        expect(chk("add(1,2)")).to eq(NUMBER)
+        expect(chk("add(1)(2)")).to eq(NUMBER)
       end
 
       it "ref" do
-        expect(chk("add")).to eq(TyFun[[NUMBER, NUMBER], NUMBER])
+        expect(chk("add")).to eq(TyFun[NUMBER, TyFun[NUMBER, NUMBER]])
       end
 
       it "literal" do

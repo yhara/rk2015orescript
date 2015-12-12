@@ -9,33 +9,33 @@ module OreScript
     bool = ->(x){ x ? Evaluator::Value::TRUE : Evaluator::Value::FALSE }
 
     FUNCTIONS = {
-      "add" => [TyFun[[NUMBER, NUMBER], NUMBER], ->(x, y){
+      "add" => [TyFun[NUMBER, TyFun[NUMBER, NUMBER]], ->(x, y){
         num[x.value + y.value]
-      }],
-      "sub" => [TyFun[[NUMBER, NUMBER], NUMBER], ->(x, y){
+      }.curry],
+      "sub" => [TyFun[NUMBER, TyFun[NUMBER, NUMBER]], ->(x, y){
         num[x.value - y.value]
-      }],
-      "mul" => [TyFun[[NUMBER, NUMBER], NUMBER], ->(x, y){
+      }.curry],
+      "mul" => [TyFun[NUMBER, TyFun[NUMBER, NUMBER]], ->(x, y){
         num[x.value * y.value]
-      }],
-      "div" => [TyFun[[NUMBER, NUMBER], NUMBER], ->(x, y){
+      }.curry],
+      "div" => [TyFun[NUMBER, TyFun[NUMBER, NUMBER]], ->(x, y){
         num[x.value / y.value]
-      }],
-      "mod" => [TyFun[[NUMBER, NUMBER], NUMBER], ->(x, y){
+      }.curry],
+      "mod" => [TyFun[NUMBER, TyFun[NUMBER, NUMBER]], ->(x, y){
         num[x.value % y.value]
-      }],
-      "sqrt" => [TyFun[[NUMBER], NUMBER], ->(x){
+      }.curry],
+      "sqrt" => [TyFun[NUMBER, NUMBER], ->(x){
         num[Math.sqrt(x.value)]
-      }],
-      "is_zero" => [TyFun[[NUMBER], BOOL], ->(x){
+      }.curry],
+      "is_zero" => [TyFun[NUMBER, BOOL], ->(x){
         bool[x.value.zero?]
-      }],
-      "is_odd" => [TyFun[[NUMBER], BOOL], ->(x){
+      }.curry],
+      "is_odd" => [TyFun[NUMBER, BOOL], ->(x){
         bool[x.value.odd?]
-      }],
-      "is_even" => [TyFun[[NUMBER], BOOL], ->(x){
+      }.curry],
+      "is_even" => [TyFun[NUMBER, BOOL], ->(x){
         bool[x.value.even?]
-      }],
+      }.curry],
     }
   end
 end

@@ -10,8 +10,8 @@ module OreScript
 
       it "let" do
         src = <<-EOD
-          x = fn(x, y){ add(x, y) }
-          x(7, 8)
+          x = fn(x){ fn(y){ add(x)(y) } }
+          x(7)(8)
         EOD
         expect(run(src)).to eq(Value::Number.new(15))
       end
@@ -22,20 +22,9 @@ module OreScript
 
       it "fcall, varref" do
         src = <<-EOD
-          fn(x, y){ add(x, y) }(7, 8)
+          fn(x){ fn(y){ add(x)(y) }}(7)(8)
         EOD
         expect(run(src)).to eq(Value::Number.new(15))
-      end
-
-      it "if" do
-        src = <<-EOD
-          if(true) { 7 } else { 8 }
-        EOD
-        expect(run(src)).to eq(Value::Number.new(7))
-        src = <<-EOD
-          if(false) { 7 } else { 8 }
-        EOD
-        expect(run(src)).to eq(Value::Number.new(8))
       end
 
       it "literal" do
