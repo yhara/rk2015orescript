@@ -102,46 +102,12 @@ module OreScript
     end
     include Type
 
-    class TypeScheme
-      # - ids : Array of Fixnum
-      def initialize(ids, type)
-        @ids = ids.uniq
-        @type = type
-      end
-      attr_reader :ids, :type
-
-      def inspect(inner=false)
-        "#<TS(%s) %p>" % [@ids.join(","), @type]
-      end
-
-      def substitute(subst)
-        TypeScheme.new(@ids, @type.substitute(subst))
-      end
-
-      # Create (monomorphic) type from this type scheme
-      def instantiate
-        # Already monomorphic
-        return @type if @ids.empty?
-
-        # Substitute type variable with fresh (monomorphic) TyVar 
-        subst = Subst.new(@ids.map{|id|
-          [id, Type::TyVar.new]
-        }.to_h)
-        return @type.substitute(subst)
-      end
-
-      # Variables of outer environment
-      def free_type_ids
-        @type.var_ids - @ids
-      end
-    end
-
     # Type environment
     class TypeEnv
       extend Forwardable
 
       def initialize(hash={})
-        @hash = hash  # String(ident) => TypeScheme
+        @hash = hash  # String(ident) => Type
       end
 
       def inspect
@@ -157,17 +123,6 @@ module OreScript
       def substitute(subst)
         TypeEnv.new(@hash.map{|name, ts| [name, ts.substitute(subst)]}
                         .to_h)
-      end
-
-      # Create polymorphic typescheme
-      def generalize(type)
-        # Collect free type ids from type schemes
-        free_type_ids = @hash.values.flat_map(&:free_type_ids)
-
-        # Type variables = Types contained in `type`
-        # except free types (i.e. types defined in elsewhere)
-        typevars = type.var_ids - free_type_ids
-        return TypeScheme.new(typevars, type)
       end
     end
 
@@ -229,13 +184,13 @@ module OreScript
     def check(ast)
       env = TypeEnv.new(
         Builtin::FUNCTIONS.map{|name, (ty, _)|
-          [name, TypeScheme.new([], ty)]
+          [name, ty]
         }.to_h
       )
       infer(env, ast)
     end
 
-    # - env : Hash(String => TypeScheme)
+    # - env : Hash(String => Ty)
     # Returns [subst, type]
     def infer(env, node)
       case node.first
@@ -247,7 +202,7 @@ module OreScript
         _, name = *node
 
         raise InferenceError, "Variable #{name} not found" if not env.key?(name)
-        [Subst.empty, env[name].instantiate]
+        [Subst.empty, env[name]]
       when :fcall
         _, func_expr, arg_expr = *node
         result_type = TyVar.new
@@ -264,16 +219,15 @@ module OreScript
         _, name, body = *node
 
         arg_type = TyVar.new
-        newenv = env.merge(name => TypeScheme.new([], arg_type))
+        newenv = env.merge(name => arg_type)
         s, t = infer(newenv, body)
         [s, TyFun.new(arg_type, t).substitute(s)]
       when :let
         _, name, expr = *node
 
         s, var_ty = infer(env, expr)
-        var_ts = env.substitute(s).generalize(var_ty)
 
-        env[name] = var_ts
+        env[name] = var_ty
         [s, var_ty]
       when :exprs
         _, exprs = *node

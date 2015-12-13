@@ -21,15 +21,15 @@ module OreScript
           expect(chk(src)).to eq(NUMBER)
         end
 
-        it "poly" do
-          src = <<-EOD
-            f = fn(x){ x }
-            f(true)
-            f(1)
-            f
-          EOD
-          expect(chk(src)).to eq(TyFun[TyVar[6], TyVar[6]])
-        end
+#        it "poly" do
+#          src = <<-EOD
+#            f = fn(x){ x }
+#            f(true)
+#            f(1)
+#            f
+#          EOD
+#          expect(chk(src)).to eq(TyFun[TyVar[6], TyVar[6]])
+#        end
       end
 
       it "exprs" do
