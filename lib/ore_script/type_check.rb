@@ -214,12 +214,12 @@ module OreScript
         unless others.all?{|x| x.is_a?(Subst)}
           raise TypeError, "some not a subst: #{others.inspect}"
         end
-        constraints = ([self]+others).flat_map(&:to_constr)
-        return TypeCheck.unify(*constraints)
+        equations = ([self]+others).flat_map(&:to_equation)
+        return TypeCheck.unify(*equations)
       end
 
       # Convert this subst into a Equation
-      def to_constr
+      def to_equation
         @hash.map{|id, ty|
           Equation.new(Type::TyVar.new(id), ty)
         }
@@ -256,8 +256,8 @@ module OreScript
         s2, arg_type = infer(env.substitute(s1), arg_expr)
 
         func_type = func_type.substitute(s2)
-        constr = Equation.new(func_type, TyFun.new(arg_type, result_type))
-        s3 = TypeCheck.unify(constr)
+        equation = Equation.new(func_type, TyFun.new(arg_type, result_type))
+        s3 = TypeCheck.unify(equation)
 
         [s1.merge(s2, s3), result_type.substitute(s3)]
       when :function
@@ -289,17 +289,17 @@ module OreScript
 
     private
 
-    def self.unify(*constraints)
+    def self.unify(*equations)
       subst = Subst.empty
-      consts = constraints.dup
+      eqs = equations.dup
 
-      until consts.empty?
-        con = consts.pop
+      until eqs.empty?
+        con = eqs.pop
         ty1, ty2 = con.ty1, con.ty2
         case
         when ty1.is_a?(TyFun) && ty2.is_a?(TyFun)
-          consts.push Equation.new(ty1.param_ty, ty2.param_ty)
-          consts.push Equation.new(ty1.ret_ty, ty2.ret_ty)
+          eqs.push Equation.new(ty1.param_ty, ty2.param_ty)
+          eqs.push Equation.new(ty1.ret_ty, ty2.ret_ty)
         when ty1.is_a?(TyVar)
           next if ty2 == ty1
           
@@ -307,9 +307,9 @@ module OreScript
           raise InferenceError if ty2.occurs?(id)
 
           subst.add!(id, ty2)
-          consts.each{|c| c.substitute!(Subst.new({id => ty2})) }
+          eqs.each{|c| c.substitute!(Subst.new({id => ty2})) }
         when ty2.is_a?(TyVar)
-          consts.push con.swap
+          eqs.push con.swap
         when ty1.is_a?(TyRaw) && ty2.is_a?(TyRaw)
           if ty1 != ty2
             raise InferenceError, "type mismatch: %p vs %p" % [ty1, ty2]
