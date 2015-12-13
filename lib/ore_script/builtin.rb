@@ -45,7 +45,7 @@ module OreScript
         n
       }.curry],
       "printc" => [TyFun[NUMBER, NUMBER], ->(n){
-        print n.value.chr
+        print n.value.to_i.chr
         n
       }.curry],
     }
