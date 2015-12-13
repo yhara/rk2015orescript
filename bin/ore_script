@@ -2,10 +2,21 @@
 $LOAD_PATH.unshift "#{__dir__}/../lib"
 require 'ore_script'
 require 'pp'
+require 'optparse'
+
+opts = {}
+OptionParser.new{|o|
+  o.on("-s", "Show source"){ opts[:s] = true }
+  o.on("-a", "Show abstract syntax tree"){ opts[:a] = true }
+  o.on("-t", "Show inferred type"){ opts[:t] = true }
+  o.on("-v", "Show result value"){ opts[:v] = true }
+}.parse!(ARGV)
 
 src = ARGF.read
-puts src
+(puts "---src:"; puts src) if opts[:s]
 ast = OreScript::Parser.new.parse(src)
-pp ast
-pp OreScript::TypeCheck.new.check(ast)
-OreScript::Evaluator.new.eval(ast)
+(puts "\n---ast:"; pp ast) if opts[:a]
+ret = OreScript::TypeCheck.new.check(ast)
+(puts "\n--type:"; pp ret; puts "\n--execute:") if opts[:t]
+val = OreScript::Evaluator.new.eval(ast)
+(puts "\n--value:"; pp val) if opts[:v]
